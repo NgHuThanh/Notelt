@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun DetailScreen(
     modifier: Modifier = Modifier,
-    names: List<String> = List(10) { "$it" }
+    names: List<String> = List(100) { "$it" }
 )
 {
     LazyVerticalGrid(

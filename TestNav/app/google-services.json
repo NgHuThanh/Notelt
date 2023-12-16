@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "910930360470",
+    "project_id": "notelt",
+    "storage_bucket": "notelt.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:910930360470:android:9426d2a2bb24e56f552ab7",
+        "android_client_info": {
+          "package_name": "com.example.testnav"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCELSOYy3rBoMh6imkaS_2AaMiGG_QQYVE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
