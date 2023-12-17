@@ -1,5 +1,6 @@
 package com.example.testnav
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -15,70 +16,157 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
+    navController: NavHostController,
     modifier: Modifier = Modifier,
-    names: List<String> = List(100) { "$it" }
+    names: List<String> = List(100) { "$it" },
 )
 {
-    LazyVerticalGrid(
-        GridCells.Fixed(2), // Set the number of items per row
-        modifier = modifier.padding(vertical = 2.dp)
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+    Scaffold(
+        //modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            TopAppBar(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ),
+                title = {
+                    IconButton(onClick = { /* do something */ }) {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "Localized description"
+                        )
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigate("Home") }) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            contentDescription = "Localized description"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {},
+                        modifier = Modifier
+                            .padding(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "Localized description"
+                        )
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+            )
+        },
     ) {
-        items(items = names) { name ->
-            Greeting(name = name)
+        Column(modifier=Modifier.padding(top = 70.dp)){
+            Row {
+                Button(
+                    onClick = {},
+
+                    ) {
+                    Text(
+                        "All",
+                    )
+                }
+                Button(
+                    onClick = {},
+
+                    ) {
+                    Text(
+                        "Favorite only",
+                        )
+                }
+            }
+            LazyVerticalGrid(
+                GridCells.Fixed(2), // Set the number of items per row
+                modifier = modifier.padding(vertical = 2.dp)
+            ) {
+                items(items = names) { name ->
+                    Greeting(name = name)
+                }
+            }
         }
+
     }
+
 }
 @Composable
 private fun Greeting(name: String) {
     Surface(
     ) {
-        Row(
+        ElevatedCard(
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 6.dp
+            ),
             modifier = Modifier
-                .padding(18.dp)
-                .background(Color.Gray, shape = RoundedCornerShape(10.dp))
-                .border(
-                    width = 0.dp,               // Độ dày của đường viền
-                    color = Color.Black,         // Màu của đường viền
-                    shape = RoundedCornerShape(10.dp)      // Hình dạng của đường viền (ở đây là hình chữ nhật)
-                )
-                .padding(10.dp)                  // Tăng khoảng cách giữa đường viền và nội dung
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = "Word: $name")
-                Text(text = "Defination: $name")
-                Row {
-                    VolumeIconButton(onClick = {
-                        // Handle click action here
-                    })
-                    HeartIconButton(onClick={
+                .padding(5.dp)
 
-                    })
-                    SettingIconButton(onClick={
+        ){
+            Row(
+                modifier = Modifier
+                    .padding(18.dp)
+                 // Tăng khoảng cách giữa đường viền và nội dung
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "$name",
+                        style = MaterialTheme.typography.displaySmall // Hoặc bất kỳ kiểu chữ nào có kích thước lớn hơn
+                    )
+                    Text(
+                        text = "$name",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                    Row {
+                        VolumeIconButton(onClick = {
+                            // Handle click action here
+                        })
+                        HeartIconButton(onClick={
 
-                    })
+                        })
+                        SettingIconButton(onClick={
 
+                        })
+
+                    }
                 }
             }
         }
+
     }
 }
 @Composable
@@ -90,7 +178,7 @@ fun VolumeIconButton(onClick: () -> Unit) {
             .padding(8.dp)
     ) {
         Icon(
-            imageVector = Icons.Default.Call,
+            imageVector = Icons.Default.PlayArrow,
             contentDescription = "Volume",
             tint = MaterialTheme.colorScheme.primary
         )

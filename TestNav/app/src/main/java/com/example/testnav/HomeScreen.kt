@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
@@ -56,9 +58,11 @@ import androidx.compose.material3.DropdownMenuItem
 
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -68,6 +72,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
@@ -87,8 +92,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.SemanticsProperties.ImeAction
 
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -110,8 +118,19 @@ fun HomeScreen(navController:NavHostController,
 
     var expanded by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
-    val isShowDialog =remember { mutableStateOf(false) }
+    val isShowDialogAdd =remember { mutableStateOf(false) }
     Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { isShowDialogAdd.value=true },
+                modifier = Modifier
+                    .padding(25.dp)
+                    .size(75.dp)
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
+            }
+        },
+
         //modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
@@ -160,6 +179,9 @@ fun HomeScreen(navController:NavHostController,
             )
         },
     ) {innerPadding ->
+        if(isShowDialogAdd.value){
+            alertDialogAdd()
+        }
         Column(modifier=Modifier.padding(top = 70.dp)){
             Row {
                 Button(
@@ -331,6 +353,60 @@ private fun DetailTopic(name: String, navController: NavHostController,) {
 }
 
 @Composable
+fun alertDialogAdd() {
+
+    val context= LocalContext.current
+    val openDialog=remember{ mutableStateOf(true) }
+    var text by remember { mutableStateOf("") }
+
+    if (openDialog.value){
+        AlertDialog(
+            onDismissRequest = { openDialog.value=false },
+            title={
+                Text(text = "Add new section")
+            },
+            text={
+                 Column {
+                     TextField(
+                         value = text,
+                         onValueChange = { text = it },
+                         modifier = Modifier
+                             .fillMaxWidth()
+                             .padding(16.dp),
+                         keyboardOptions = KeyboardOptions(
+                             keyboardType = KeyboardType.Text,
+                             imeAction = androidx.compose.ui.text.input.ImeAction.Done,
+                             capitalization = KeyboardCapitalization.Sentences
+                         ),
+                         textStyle = LocalTextStyle.current.copy(
+                             fontSize = 16.sp // Kích thước chữ
+                         ),
+                         singleLine = true,
+                         placeholder = { Text("Name") }
+                     )
+                 }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    openDialog.value = false
+                    Toast.makeText(context,"Confirm",Toast.LENGTH_SHORT).show()
+                }) {
+                    Text(text="Add section")
+                }
+            },
+            dismissButton = {
+                Button(onClick = {
+                    openDialog.value = false
+                    Toast.makeText(context,"Dismiss",Toast.LENGTH_SHORT).show()
+                }) {
+                    Text(text="Cancle")
+                }
+            },
+
+            )
+    }
+}
+@Composable
 fun alertDialog() {
     val PracticeMenus= listOf(
         PracticeMenu(Icons.TwoTone.Check,"Basic Review","Basic Flashcards review","None"),
@@ -351,13 +427,17 @@ fun alertDialog() {
                     PracticeMenus.forEach{
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth().size(width = 500.dp, height = 100.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .size(width = 500.dp, height = 100.dp)
                                 .padding(18.dp),
                         ) {
                             Button(
                                 onClick = {
                                                 },
-                                modifier = Modifier.fillMaxWidth().size(width = 500.dp, height = 100.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .size(width = 500.dp, height = 100.dp),
                                 ) {
                                 Icon(imageVector=it.icon,contentDescription = "")
                                 Spacer(modifier = Modifier.width(8.dp))

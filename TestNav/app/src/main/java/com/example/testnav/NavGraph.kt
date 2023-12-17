@@ -14,7 +14,7 @@ fun Nav() {
             HomeScreen(navController)
         }
         composable(route="Detail"){
-            DetailScreen()
+            DetailScreen(navController)
         }
     }
 }
