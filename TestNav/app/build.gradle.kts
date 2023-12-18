@@ -3,6 +3,9 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
+
+    id("kotlin-kapt")
+    id("dagger.hilt.android,plugin")
 }
 
 android {

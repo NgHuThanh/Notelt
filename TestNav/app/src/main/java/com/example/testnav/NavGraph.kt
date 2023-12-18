@@ -16,5 +16,9 @@ fun Nav() {
         composable(route="Detail"){
             DetailScreen(navController)
         }
+        composable(route="Review"){
+            ReviewScreen(navController)
+        }
     }
 }
+//navController.navigate("Review")

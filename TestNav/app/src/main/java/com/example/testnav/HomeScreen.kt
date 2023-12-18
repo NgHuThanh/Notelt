@@ -255,7 +255,7 @@ private fun DetailTopic(name: String, navController: NavHostController,) {
                             )
                         }
                         if(isShowDialog.value){
-                            alertDialog()
+                            alertDialog(navController)
                         }
                         Button(
                             onClick = { navController.navigate("Detail")},
@@ -407,9 +407,9 @@ fun alertDialogAdd() {
     }
 }
 @Composable
-fun alertDialog() {
+fun alertDialog(navController:NavHostController) {
     val PracticeMenus= listOf(
-        PracticeMenu(Icons.TwoTone.Check,"Basic Review","Basic Flashcards review","None"),
+        PracticeMenu(Icons.TwoTone.Check,"Basic Review","Basic Flashcards review","Review"),
         PracticeMenu(Icons.TwoTone.Search,"Multiple answers","Select the correct answer","None"),
         PracticeMenu(Icons.TwoTone.Create,"Write Review","Review by writing word","None"),
         PracticeMenu(Icons.TwoTone.LocationOn,"Match Cards","Math between two word","None"),
@@ -434,6 +434,7 @@ fun alertDialog() {
                         ) {
                             Button(
                                 onClick = {
+                                    navController.navigate(it.screen)
                                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
