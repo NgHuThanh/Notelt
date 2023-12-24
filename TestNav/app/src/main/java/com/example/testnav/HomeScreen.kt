@@ -78,6 +78,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -101,9 +102,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.protobuf.NullValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 import androidx.navigation.NavHostController
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+
 data class ListItem(val title: String, val options: List<OptionItem>)
 
 data class OptionItem(val icon: ImageVector, val text: String, val action: () -> Unit)
@@ -113,8 +119,10 @@ data class OptionItem(val icon: ImageVector, val text: String, val action: () ->
 @Composable
 fun HomeScreen(navController:NavHostController,
                modifier: Modifier = Modifier,
+
                names: List<String> = List(1000) { "$it" }
 ) {
+
 
     var expanded by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
@@ -168,7 +176,6 @@ fun HomeScreen(navController:NavHostController,
                     DropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
-
                     ) {
                         DropdownMenuItem(text = { Text("Review Settings") }, onClick = { expanded = false })
                         DropdownMenuItem(text = { Text("Display Archived") }, onClick = { expanded = false })
@@ -202,16 +209,18 @@ fun HomeScreen(navController:NavHostController,
                     )
                 }
             }
-            LazyColumn(modifier = modifier
-                .padding(horizontal=2.dp))
-            {
-                items(items = names) { name ->
-                    DetailTopic(
-                        name = name,
-                        navController
-                    )
-                }
-            }
+
+
+//            LazyColumn(modifier = modifier
+//                .padding(horizontal=2.dp))
+//            {
+//                items(folders) { folder ->
+//                    DetailTopic(
+//                        folder,
+//                        navController
+//                    )
+//                }
+//            }
         }
     }
     }
@@ -221,9 +230,9 @@ fun HomeScreen(navController:NavHostController,
 
 //}
 @Composable
-private fun DetailTopic(name: String, navController: NavHostController,) {
+private fun DetailTopic(folder: Folder, navController: NavHostController,) {
     var expandedTopic by remember { mutableStateOf(false) }
-    val isShowDialog =remember { mutableStateOf(false) }
+    val isShowDialog = remember { mutableStateOf(false) }
     Surface(
     ) {
         ElevatedCard(
@@ -233,13 +242,12 @@ private fun DetailTopic(name: String, navController: NavHostController,) {
             modifier = Modifier
                 .size(width = 500.dp, height = 150.dp)
                 .padding(18.dp)
-
         ) {
             Row{
                 Column(modifier = Modifier
                     .weight(1f)
                     .padding(10.dp)) {
-                    Text(text = name)
+                    Text(text = "")
                     Text(text = "1/20",
                         style = TextStyle(
                             fontSize = 12.sp, // Đặt kích thước chữ là 12sp (có thể điều chỉnh theo ý muốn)
@@ -390,6 +398,7 @@ fun alertDialogAdd() {
                 Button(onClick = {
                     openDialog.value = false
                     Toast.makeText(context,"Confirm",Toast.LENGTH_SHORT).show()
+                    addItemToFirebase(text)
                 }) {
                     Text(text="Add section")
                 }

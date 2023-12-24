@@ -3,9 +3,9 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
-
-    id("kotlin-kapt")
-    id("dagger.hilt.android,plugin")
+    //id("kotlin-kapt")
+    id("kotlin-android")
+    //id("kotlinx-serialization")
 }
 
 android {
@@ -23,6 +23,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+
     }
 
     buildTypes {
@@ -41,6 +43,9 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+
+
     buildFeatures {
         compose = true
     }
@@ -67,6 +72,8 @@ dependencies {
 
     implementation("com.google.firebase:firebase-crashlytics:18.6.0")
     implementation("com.google.firebase:firebase-analytics:21.5.0")
+    implementation("com.google.firebase:firebase-crashlytics-buildtools:2.9.9")
+    implementation("com.google.firebase:firebase-firestore:24.10.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -75,10 +82,38 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     implementation ("androidx.navigation:navigation-compose:2.7.5")
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation ("io.coil-kt:coil-compose:1.3.2")
 
+    //implementation ("io.ktor:ktor-client-android:1.7.4")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+    //implementation ("com.google.accompanist:accompanist-coil:0.19.0")
 
+    implementation ("com.google.dagger:hilt-android:2.39")
 
+    implementation ("androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03")
 
+    implementation ("androidx.hilt:hilt-navigation-compose:1.0.0-rc01")
 
+    //Retrofit
+    //implementation("com.squared.retrofit2:retrofit:2.9.0")
+    //implementation("com.squared.retrofit2:converter-gson:2.9.0")
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:0.8.0")
 
+    //Kotlinx
+    //implementation("org.jetbrains.kotlinx;kotlinx-serialization-json:1.3.0")
+
+    //Room component
+    implementation("androidx.room:room-runtime:2.4.0")
+
+    implementation("androidx.room:room-ktx:2.6.1")
+    implementation("androidx.room:room-paging:2.6.1")
+
+    //Paging
+    implementation("androidx.paging:paging-compose:1.0.0-alpha14")
+
+//    kapt("androidx.room:room-compiler:2.4.0")
+//    kapt ("androidx.hilt:hilt-compiler:1.0.0-alpha03")
+//    kapt ("com.google.dagger:hilt-android-compiler:2.39")
 }

@@ -46,6 +46,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.twotone.Check
 import androidx.compose.material.icons.twotone.Create
@@ -57,6 +58,7 @@ import androidx.compose.material3.BadgedBox
 
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 
 import androidx.compose.material3.DrawerValue
@@ -85,6 +87,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.runtime.LaunchedEffect
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -93,6 +96,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
@@ -102,6 +106,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.SemanticsProperties.ImeAction
 
@@ -115,13 +120,25 @@ import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.protobuf.NullValue
 
 import androidx.navigation.NavHostController
+import coil.compose.rememberImagePainter
+import coil.transform.RoundedCornersTransformation
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import java.lang.Exception
+import com.example.testnav.getImageList as getImageList1
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewScreen(navController: NavHostController) {
     var expanded by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
-    val isShowDialogAdd =remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("dog") }
+
     Scaffold(
         //modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -160,14 +177,32 @@ fun ReviewScreen(navController: NavHostController) {
             )
         },
     ){
-        ImageListScreen(imageList = getImageList())
+        ImageListScreen(imageList = getImageList1())
     }
 }
-data class ImageItem(val id: Int, val painter: Painter, val description: String, val heart: Boolean)
+
 @Composable
 fun ImageListScreen(imageList: List<ImageItem>) {
     var currentIndex by remember { mutableStateOf(0) }
     val maxIndex = imageList.size - 1
+
+    var unsplashPhoto by remember { mutableStateOf<UnsplashPhoto?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    var isError by remember { mutableStateOf(false) }
+
+    //Đang test api
+
+        performSearch(query = imageList[currentIndex].description) { photo, error ->
+            if (photo != null) {
+                unsplashPhoto = photo
+            } else {
+                isError = true
+            }
+            isLoading = false
+        }
+        isLoading = true
+
+
 
     Column(
         modifier = Modifier
@@ -175,19 +210,64 @@ fun ImageListScreen(imageList: List<ImageItem>) {
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
+
     ) {
-        Spacer(modifier = Modifier.height(14.dp))
-        Image(
-            painter = imageList[currentIndex].painter,
-            contentDescription = imageList[currentIndex].description,
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(500.dp)
-                .padding(10.dp)
-                .clip(shape = MaterialTheme.shapes.medium),
+                .height(300.dp)
+        ) {
+            if (unsplashPhoto != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(MaterialTheme.shapes.medium)
+                ) {
+                    // Coil Image
+                    Image(
+                        painter = rememberImagePainter(
+                            data = unsplashPhoto!!.urls.regular,
+                            builder = {
+                                // Add any transformations here if needed
+                                transformations(RoundedCornersTransformation(16f))
+                            }
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                }
 
-            contentScale = ContentScale.Crop
-        )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Bottom,
+                ) {
+                    Text(
+                        text = unsplashPhoto!!.user.name,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.White
+                    )
+                }
+            } else if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .align(Alignment.Center)
+                )
+            } else if (isError) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = Color.Red,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .align(Alignment.Center)
+                )
+            }
+        }
+
 
         Spacer(modifier = Modifier.height(16.dp))
         Row(modifier = Modifier
@@ -218,6 +298,7 @@ fun ImageListScreen(imageList: List<ImageItem>) {
                 )
             }
         }
+
         Text(
             text = "defination: ${imageList[currentIndex].description}",
             modifier = Modifier
@@ -251,6 +332,7 @@ fun ImageListScreen(imageList: List<ImageItem>) {
                 onClick = {
                     if (currentIndex < maxIndex) {
                         currentIndex++
+
                     }
                 }
             ) {
@@ -263,40 +345,53 @@ fun ImageListScreen(imageList: List<ImageItem>) {
         }
     }
 }
+data class ImageItem(val id: Int, val description: String, val heart: Boolean,val link:String,val user:String)
+@SuppressLint("CoroutineCreationDuringComposition")
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun getImageList(): List<ImageItem> {
-    // Replace with your actual image resources and descriptions
-    return listOf(
-        ImageItem(
-            id = 1,
-            painter = painterResource(id = R.drawable.puppy),
-            description = "Image 1",
-            heart=true,
-        ),
-        ImageItem(
-            id = 2,
-            painter = painterResource(id = R.drawable.puppy2),
-            description = "Image 2",
-            heart=true,
-        ),
-        ImageItem(
-            id = 3,
-            painter = painterResource(id = R.drawable.puppy3),
-            description = "Image 2",
-            heart=true,
-        ),
-        ImageItem(
-            id = 4,
-            painter = painterResource(id = R.drawable.puppy),
-            description = "Image 1",
-            heart=true,
-        ),
-        ImageItem(
-            id = 5,
-            painter = painterResource(id = R.drawable.puppy2),
-            description = "Image 2",
-            heart=true,
-        ),
+    var query by remember { mutableStateOf("") }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val scope = rememberCoroutineScope()
+//    val vd:String
+//    vd="https://images.unsplash.com/photo-1416339306562-f3d12fefd36f?ixlib=rb-0.3.5&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=1080&fit=max&s=92f3e02f63678acc8416d044e189f515"
+    val originalList = listOf(
+        ImageItem(id = 1, description = "cat", link = "", heart = true,user=""),
+        ImageItem(id = 2, description = "dog", link = "", heart = true,user=""),
+        ImageItem(id = 3, description = "fish", link = "", heart = true,user=""),
+        ImageItem(id = 4, description = "human", link = "", heart = true,user=""),
+        ImageItem(id = 5, description = "love", link = "", heart = true,user=""),
         // Add more images as needed
     )
+
+
+    // Replace with your actual image resources and descriptions
+    return originalList
+}
+
+@Composable
+fun performSearch(query: String, onResult: (UnsplashPhoto?, Exception?) -> Unit) {
+    val unsplashApiKey = "LXaGi4Y2hOPnddHNuzaEIv9sbsaa96XbUU_g-ziNZIc" // Thay thế bằng API key của bạn
+    val retrofit = remember {
+        Retrofit.Builder()
+            .baseUrl("https://api.unsplash.com")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    val unsplashService = remember(retrofit) {
+        retrofit.create(UnsplashService::class.java)
+    }
+
+    LaunchedEffect(query) {
+        try {
+            val response = withContext(Dispatchers.IO) {
+                unsplashService.searchPhotos(query, unsplashApiKey)
+            }
+            val photo = response.results.firstOrNull()
+            onResult(photo, null)
+        } catch (e: Exception) {
+            onResult(null, e)
+        }
+    }
 }
