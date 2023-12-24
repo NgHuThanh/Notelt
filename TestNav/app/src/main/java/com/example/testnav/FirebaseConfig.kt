@@ -5,10 +5,13 @@ import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 class FirebaseViewModel : ViewModel() {
     private val firestore = Firebase.firestore
@@ -42,6 +45,7 @@ class MyApp : Application() {
         FirebaseApp.initializeApp(this)
     }
 }
+
 fun addItemToFirebase(title: String) {
     val db = FirebaseFirestore.getInstance()
 
@@ -62,4 +66,38 @@ fun addItemToFirebase(title: String) {
             // Handle failure
             Log.w("TAG", "Error adding folder", e)
         }
+}
+
+class FolderViewModel : ViewModel() {
+
+    // MutableStateFlow để theo dõi danh sách các folder
+    val folders = MutableStateFlow<List<Folder>>(emptyList())
+
+    private val db = FirebaseFirestore.getInstance()
+
+    init {
+        // Gọi hàm để lấy dữ liệu từ Firebase khi ViewModel được tạo
+        fetchDataFromFirebase()
+    }
+
+    private fun fetchDataFromFirebase() {
+        // Truy vấn tất cả các documents từ collection "folders"
+        db.collection("folders")
+            .addSnapshotListener { value, error ->
+                if (error != null) {
+                    // Xử lý lỗi nếu có
+                    return@addSnapshotListener
+                }
+
+                // Chuyển đổi dữ liệu từ Firebase thành danh sách các Folder
+                val foldersList = value?.documents?.mapNotNull {
+                    it.toObject(Folder::class.java)
+                } ?: emptyList()
+
+                // Cập nhật MutableStateFlow với danh sách mới
+                viewModelScope.launch {
+                    folders.emit(foldersList)
+                }
+            }
+    }
 }

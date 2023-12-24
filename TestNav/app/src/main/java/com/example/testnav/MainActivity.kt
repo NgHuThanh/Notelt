@@ -19,6 +19,8 @@ class MainActivity : ComponentActivity() {
             TestNavTheme {
             //MainScreen()
             NavDrawer()
+            // DataScreen()
+
             }
         }
     }
