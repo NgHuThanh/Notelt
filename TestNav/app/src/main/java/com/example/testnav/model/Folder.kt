@@ -4,5 +4,5 @@ data class Folder(
     // Các thuộc tính khác của Folder
 ) {
     // Constructor không có tham số
-    constructor() : this("")
+    
 }

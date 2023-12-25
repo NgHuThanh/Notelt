@@ -73,7 +73,7 @@ import com.example.testnav.model.DataviewModel
 import kotlinx.coroutines.runBlocking
 
 
-data class OptionItem(val icon: ImageVector, val text: String, val action: () -> Unit)
+
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)

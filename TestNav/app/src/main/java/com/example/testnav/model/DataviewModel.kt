@@ -22,7 +22,6 @@ class DataviewModel : ViewModel() {
     val state = mutableStateOf<List<Folder>>(emptyList())
 
     private val firestore = FirebaseFirestore.getInstance()
-
     init {
         getData()
     }
@@ -92,7 +91,6 @@ class DataviewModel : ViewModel() {
 suspend fun getDataFromFireStore(): List<Folder> {
     val db = FirebaseFirestore.getInstance()
     var folders = emptyList<Folder>()
-
     try {
         val querySnapshot = db.collection("folders").get().await()
 
