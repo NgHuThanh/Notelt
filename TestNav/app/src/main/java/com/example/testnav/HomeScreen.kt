@@ -52,6 +52,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,6 +82,7 @@ fun HomeScreen(
    dataviewModel: DataviewModel = viewModel(),
 ) {
     val getFolders = dataviewModel.state.value
+
     var expanded by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
     val isShowDialogAdd =remember { mutableStateOf(false) }
@@ -176,7 +178,8 @@ fun HomeScreen(
                 items(getFolders) { folder ->
                     DetailTopic(
                         folder.title,
-                        navController
+                        navController,
+                        dataviewModel
                     )
                 }
             }
@@ -189,9 +192,11 @@ fun HomeScreen(
 
 
 @Composable
-private fun DetailTopic(folder: String?, navController: NavHostController,) {
+private fun DetailTopic(folder: String?, navController: NavHostController,dataviewModel: DataviewModel) {
     var expandedTopic by remember { mutableStateOf(false) }
     val isShowDialog = remember { mutableStateOf(false) }
+
+    var delword by remember { mutableStateOf("") }
     Surface(
     ) {
         ElevatedCard(
@@ -303,7 +308,13 @@ private fun DetailTopic(folder: String?, navController: NavHostController,) {
                                 )
                                 Text("Delete")
                             }
-                        }, onClick = { expandedTopic = false })
+                        }, onClick = {
+                            delword="${folder}"
+                            expandedTopic = false
+                        })
+                        LaunchedEffect(delword) {
+                            dataviewModel.deleteFoldersWithTitleNone()
+                        }
                     }
                     IconButton(onClick = { /* do something */ }) {
                         Icon(
