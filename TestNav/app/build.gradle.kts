@@ -117,4 +117,6 @@ dependencies {
 //    kapt("androidx.room:room-compiler:2.4.0")
 //    kapt ("androidx.hilt:hilt-compiler:1.0.0-alpha03")
 //    kapt ("com.google.dagger:hilt-android-compiler:2.39")
+
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1")
 }

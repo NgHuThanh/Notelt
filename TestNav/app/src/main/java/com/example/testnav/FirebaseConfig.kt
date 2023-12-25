@@ -48,7 +48,6 @@ class MyApp : Application() {
 
 fun addItemToFirebase(title: String) {
     val db = FirebaseFirestore.getInstance()
-
     // Convert Folder data class to HashMap
     val item = hashMapOf(
         "title" to title
@@ -66,6 +65,7 @@ fun addItemToFirebase(title: String) {
             // Handle failure
             Log.w("TAG", "Error adding folder", e)
         }
+
 }
 
 class FolderViewModel : ViewModel() {

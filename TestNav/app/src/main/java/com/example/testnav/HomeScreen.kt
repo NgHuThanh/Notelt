@@ -4,6 +4,7 @@ package com.example.testnav
 
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.testnav.model.DataviewModel
+import kotlinx.coroutines.runBlocking
 
 
 data class OptionItem(val icon: ImageVector, val text: String, val action: () -> Unit)
@@ -146,7 +148,7 @@ fun HomeScreen(
         },
     ) {innerPadding ->
         if(isShowDialogAdd.value){
-            alertDialogAdd()
+            alertDialogAdd(dataviewModel)
         }
         Column(modifier=Modifier.padding(top = 70.dp)){
             Row {
@@ -171,7 +173,6 @@ fun HomeScreen(
                 }
             }
 
-
             LazyColumn(modifier = modifier
                 .padding(horizontal=2.dp))
             {
@@ -195,7 +196,7 @@ fun HomeScreen(
 private fun DetailTopic(folder: String?, navController: NavHostController,dataviewModel: DataviewModel) {
     var expandedTopic by remember { mutableStateOf(false) }
     val isShowDialog = remember { mutableStateOf(false) }
-
+    val isShowDialogUpdate =remember { mutableStateOf(false) }
     var delword by remember { mutableStateOf("") }
     Surface(
     ) {
@@ -253,7 +254,6 @@ private fun DetailTopic(folder: String?, navController: NavHostController,datavi
                     DropdownMenu(
                         expanded = expandedTopic,
                         onDismissRequest = { expandedTopic = false },
-
                         ) {
                         DropdownMenuItem(text = {
                             Row{
@@ -261,9 +261,15 @@ private fun DetailTopic(folder: String?, navController: NavHostController,datavi
                                     imageVector = Icons.Filled.Create,
                                     contentDescription = "Localized description"
                                 )
+                                //Text("${folder}")
                                 Text("Edit")
                             }
-                                                }, onClick = { expandedTopic = false })
+                                                }, onClick = {
+                            isShowDialogUpdate.value=true
+                                                })
+                        if(isShowDialogUpdate.value){
+                            alertDialogUpdate("${folder}",dataviewModel)
+                        }
                         DropdownMenuItem(text = {
                             Row{
                                 Icon(
@@ -311,10 +317,12 @@ private fun DetailTopic(folder: String?, navController: NavHostController,datavi
                         }, onClick = {
                             delword="${folder}"
                             expandedTopic = false
+                            runBlocking{
+                                dataviewModel.deleteFoldersWithTitleNone("${folder}")
+                            }
                         })
-                        LaunchedEffect(delword) {
-                            dataviewModel.deleteFoldersWithTitleNone()
-                        }
+
+
                     }
                     IconButton(onClick = { /* do something */ }) {
                         Icon(
@@ -332,8 +340,7 @@ private fun DetailTopic(folder: String?, navController: NavHostController,datavi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun alertDialogAdd() {
-
+fun alertDialogAdd(dataviewModel: DataviewModel) {
     val context= LocalContext.current
     val openDialog=remember{ mutableStateOf(true) }
     var text by remember { mutableStateOf("") }
@@ -369,7 +376,11 @@ fun alertDialogAdd() {
                 Button(onClick = {
                     openDialog.value = false
                     Toast.makeText(context,"Confirm",Toast.LENGTH_SHORT).show()
-                    addItemToFirebase(text)
+                    //addItemToFirebase(text)
+                    runBlocking {
+                        dataviewModel.createFolder(text)
+                    }
+
                 }) {
                     Text(text="Add section")
                 }
@@ -377,6 +388,69 @@ fun alertDialogAdd() {
             dismissButton = {
                 Button(onClick = {
                     openDialog.value = false
+                    Toast.makeText(context,"Dismiss",Toast.LENGTH_SHORT).show()
+                }) {
+                    Text(text="Cancle")
+                }
+            },
+            )
+    }
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun alertDialogUpdate(title:String,dataviewModel: DataviewModel) {
+    val context= LocalContext.current
+    val openDialogUp=remember{ mutableStateOf(true) }
+    var text by remember { mutableStateOf("") }
+    var mainText by remember { mutableStateOf("") }
+
+    var isUpdateButtonClicked by remember { mutableStateOf(false) }
+
+    if (openDialogUp.value){
+        AlertDialog(
+            onDismissRequest = { openDialogUp.value=false },
+            title={
+                Text(text = "Update title ${title}")
+            },
+            text={
+                Column {
+                    TextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = androidx.compose.ui.text.input.ImeAction.Done,
+                            capitalization = KeyboardCapitalization.Sentences
+                        ),
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize = 16.sp // Kích thước chữ
+                        ),
+                        singleLine = true,
+                        placeholder = { Text("Name") }
+                    )
+                }
+            },
+
+            confirmButton = {
+                Button(onClick = {
+                    openDialogUp.value = false
+                    Toast.makeText(context,"Confirm",Toast.LENGTH_SHORT).show()
+                    isUpdateButtonClicked = true
+                    mainText=text
+                    runBlocking {
+                        dataviewModel.updateFoldersWithTitleNone(mainText, title)
+                    }
+                }) {
+                    Text(text="Update")
+                }
+
+            },
+            dismissButton = {
+                Button(onClick = {
+                    openDialogUp.value = false
                     Toast.makeText(context,"Dismiss",Toast.LENGTH_SHORT).show()
                 }) {
                     Text(text="Cancle")
