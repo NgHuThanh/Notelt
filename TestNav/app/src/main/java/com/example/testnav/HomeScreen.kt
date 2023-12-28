@@ -219,8 +219,6 @@ fun HomeScreen(
     }
     }
 
-
-
 @Composable
 private fun DetailTopic(
     folder: String?, navController: NavHostController,
@@ -377,6 +375,11 @@ private fun DetailTopic(
                             imageVector = Icons.Filled.Share,
                             contentDescription = "Localized description"
                         )
+
+
+
+
+                        
                     }
                 }
             }
