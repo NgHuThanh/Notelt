@@ -1,6 +1,7 @@
 package com.example.testnav
 
 import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
@@ -38,21 +40,36 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.testnav.model.getVocabsForFolderWithTitle
+import kotlinx.coroutines.runBlocking
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
     navController: NavHostController,
+    folder: String,
     modifier: Modifier = Modifier,
     names: List<String> = List(100) { "$it" },
+    dataviewModel: VocabModel = viewModel(),
+
 )
 {
+    val getFolders = dataviewModel.state.value
+    dataviewModel.getData(folder)
+
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
     Scaffold(
         //modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -112,12 +129,13 @@ fun DetailScreen(
                         )
                 }
             }
+
             LazyVerticalGrid(
                 GridCells.Fixed(2), // Set the number of items per row
                 modifier = modifier.padding(vertical = 2.dp)
             ) {
-                items(items = names) { name ->
-                    Greeting(name = name)
+                items(items = getFolders) { name ->
+                    Greeting(name = name,parent=folder)
                 }
             }
         }
@@ -126,7 +144,25 @@ fun DetailScreen(
 
 }
 @Composable
-private fun Greeting(name: String) {
+fun rememberTextToSpeechManager(context: Context): TextToSpeechManager {
+    val textToSpeechManager = remember(context) {
+        TextToSpeechManager(context)
+    }
+
+    DisposableEffect(textToSpeechManager) {
+        onDispose {
+            textToSpeechManager.shutdown()
+        }
+    }
+
+    return textToSpeechManager
+}
+@Composable
+fun Greeting(name: Vocab,parent:String,
+
+
+) {
+    val textToSpeechManager = rememberTextToSpeechManager(LocalContext.current)
     Surface(
     ) {
         ElevatedCard(
@@ -144,22 +180,17 @@ private fun Greeting(name: String) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "$name",
+                        text = "${name.word}",
                         style = MaterialTheme.typography.displaySmall // Hoặc bất kỳ kiểu chữ nào có kích thước lớn hơn
                     )
                     Text(
-                        text = "$name",
+                        text = "${name.definition}",
                         style = MaterialTheme.typography.labelLarge
                     )
                     Row {
-                        VolumeIconButton(onClick = {
-                            // Handle click action here
-                        })
-                        HeartIconButton(onClick={
-
-                        })
+                        VolumeIconButton(textToSpeechManager, name.word)
+                        ToggleIconButton(name.heart,name.word,parent=parent)
                         SettingIconButton(onClick={
-
                         })
 
                     }
@@ -167,6 +198,44 @@ private fun Greeting(name: String) {
             }
         }
 
+    }
+}
+@Composable
+fun VolumeIconButton(textToSpeechManager: TextToSpeechManager, textToSpeak: String) {
+    IconButton(
+        onClick = {
+            textToSpeechManager.speak(textToSpeak)
+        },
+        modifier = Modifier
+            .size(48.dp)
+            .padding(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.PlayArrow,
+            contentDescription = "Volume",
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+@Composable
+fun ToggleIconButton(liked:Boolean,word:String,parent: String) {
+    var isFavorite by remember { androidx.compose.runtime.mutableStateOf(liked)}
+    IconButton(
+        onClick = {
+            isFavorite = !isFavorite
+            runBlocking { if(liked)
+                updateHeartStatusBasedOnWord(parent,word,false)
+            else
+                updateHeartStatusBasedOnWord(parent,word,true)
+            }
+        },
+        modifier = Modifier.padding(16.dp)
+    ) {
+        // Sử dụng biến trạng thái để chọn icon phù hợp
+        Icon(
+            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+            contentDescription = "Favorite Icon"
+        )
     }
 }
 @Composable
@@ -184,6 +253,7 @@ fun VolumeIconButton(onClick: () -> Unit) {
         )
     }
 }
+
 @Composable
 fun SettingIconButton(onClick: () -> Unit) {
     IconButton(

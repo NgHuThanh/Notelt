@@ -4,8 +4,8 @@ package com.example.testnav
 
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -57,19 +58,23 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.testnav.model.DataviewModel
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 
@@ -81,13 +86,16 @@ import kotlinx.coroutines.runBlocking
 fun HomeScreen(
     navController:NavHostController,
    modifier: Modifier = Modifier,
-   dataviewModel: DataviewModel = viewModel(),
+   dataviewModel: NoteltModel = viewModel(),
 ) {
     val getFolders = dataviewModel.state.value
 
     var expanded by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
-    val isShowDialogAdd =remember { mutableStateOf(false) }
+    val isShowDialogAdd = remember { mutableStateOf(false) }
+    var searchText by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
@@ -108,11 +116,42 @@ fun HomeScreen(
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    IconButton(onClick = { /* do something */ }) {
-                        Icon(
-                            imageVector = Icons.Filled.Search,
-                            contentDescription = "Localized description"
-                        )
+//                    IconButton(onClick = { /* do something */ }) {
+//                        Icon(
+//                            imageVector = Icons.Filled.Search,
+//                            contentDescription = "Localized description"
+//                        )
+//                    }
+                    TextField(
+                        value = searchText,
+                        onValueChange = { newSearchText ->
+                            searchText = newSearchText
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .background(
+                                color = Color.White.copy(alpha = 1f), // Điều chỉnh giá trị alpha để thay đổi độ trong suốt
+                                shape = RoundedCornerShape(8.dp) // Tuỳ chỉnh theo nhu cầu
+                            ),
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            imeAction = ImeAction.Done,
+                            keyboardType = KeyboardType.Text
+                        ),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search Icon"
+                            )
+                        }
+                    )
+                    LaunchedEffect(searchText) {
+                        // This block will be executed when searchText changes
+                        val filteredFolders = getFolders.filter { folder ->
+                            folder.contains(searchText, ignoreCase = true)
+                        }
+                        // Do something with the filteredFolders, for example, update a state variable
+                        // (e.g., filteredFoldersState.value = filteredFolders)
                     }
                 },
                 navigationIcon = {
@@ -154,31 +193,21 @@ fun HomeScreen(
             Row {
                 Button(
                     onClick = {},
-
+                    modifier = Modifier.padding(end = 16.dp)
                 ) {
-                    Text(
-                        "Practice All",
-                    )
+                    Text("Practice All")
                 }
                 Button(
-                    onClick = {
-                        //navController.navigate("Detail")
-                              },
-
+                    onClick = { navController.navigate("DetailScreen2") },
                 ) {
-                    Text(
-                        "Review All",
-
-                    )
+                    Text("Review All")
                 }
             }
 
-            LazyColumn(modifier = modifier
-                .padding(horizontal=2.dp))
-            {
+            LazyColumn(modifier = modifier.padding(horizontal = 2.dp)) {
                 items(getFolders) { folder ->
                     DetailTopic(
-                        folder.title,
+                        folder,
                         navController,
                         dataviewModel
                     )
@@ -193,11 +222,19 @@ fun HomeScreen(
 
 
 @Composable
-private fun DetailTopic(folder: String?, navController: NavHostController,dataviewModel: DataviewModel) {
+private fun DetailTopic(
+    folder: String?, navController: NavHostController,
+    dataviewModel: NoteltModel
+) {
     var expandedTopic by remember { mutableStateOf(false) }
     val isShowDialog = remember { mutableStateOf(false) }
     val isShowDialogUpdate =remember { mutableStateOf(false) }
+    val isShowDialogAddWord =remember { mutableStateOf(false) }
     var delword by remember { mutableStateOf("") }
+
+
+
+
     Surface(
     ) {
         ElevatedCard(
@@ -213,7 +250,7 @@ private fun DetailTopic(folder: String?, navController: NavHostController,datavi
                     .weight(1f)
                     .padding(10.dp)) {
                     Text(text = "${folder}")
-                    Text(text = "1/20",
+                    Text(text = "0/20",
                         style = TextStyle(
                             fontSize = 12.sp, // Đặt kích thước chữ là 12sp (có thể điều chỉnh theo ý muốn)
                             color = LocalContentColor.current.copy(alpha = 0.8f) // Màu xám với độ trong suốt 0.8
@@ -222,16 +259,19 @@ private fun DetailTopic(folder: String?, navController: NavHostController,datavi
                     Row {
                         Button(
                             onClick = {isShowDialog.value=true},
+                            modifier=Modifier.padding(end = 16.dp)
                         ) {
                             Text(
                                 "Practice",
                             )
                         }
                         if(isShowDialog.value){
-                            alertDialog(navController)
+                            alertDialog(navController,"${folder}")
                         }
                         Button(
-                            onClick = { navController.navigate("Detail")},
+                            onClick = {
+                                navController.navigate("Detail/${folder}")
+                                      },
                         ) {
                             Text(
                                 "Review",
@@ -242,6 +282,7 @@ private fun DetailTopic(folder: String?, navController: NavHostController,datavi
                 Column(
                     modifier = Modifier
                         .wrapContentWidth(Alignment.End)
+                        .padding(10.dp)
                 ) {
                     IconButton(onClick = {expandedTopic = true },
                         modifier = Modifier
@@ -278,7 +319,14 @@ private fun DetailTopic(folder: String?, navController: NavHostController,datavi
                                 )
                                 Text("Add")
                             }
-                        }, onClick = { expandedTopic = false })
+                        }, onClick = {
+                            isShowDialogAddWord.value=true
+
+                            expandedTopic = false
+                        })
+                        if(isShowDialogAddWord.value){
+                            alertDialogAddWord(dataviewModel,"${folder}")
+                        }
                         DropdownMenuItem(text = {
                             Row{
                                 Icon(
@@ -318,13 +366,13 @@ private fun DetailTopic(folder: String?, navController: NavHostController,datavi
                             delword="${folder}"
                             expandedTopic = false
                             runBlocking{
-                                dataviewModel.deleteFoldersWithTitleNone("${folder}")
+                                dataviewModel.deleteSubCollection("${folder}")
                             }
                         })
 
 
                     }
-                    IconButton(onClick = { /* do something */ }) {
+                    IconButton(onClick = {  }) {
                         Icon(
                             imageVector = Icons.Filled.Share,
                             contentDescription = "Localized description"
@@ -340,7 +388,7 @@ private fun DetailTopic(folder: String?, navController: NavHostController,datavi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun alertDialogAdd(dataviewModel: DataviewModel) {
+fun alertDialogAdd(dataviewModel: NoteltModel) {
     val context= LocalContext.current
     val openDialog=remember{ mutableStateOf(true) }
     var text by remember { mutableStateOf("") }
@@ -378,7 +426,7 @@ fun alertDialogAdd(dataviewModel: DataviewModel) {
                     Toast.makeText(context,"Confirm",Toast.LENGTH_SHORT).show()
                     //addItemToFirebase(text)
                     runBlocking {
-                        dataviewModel.createFolder(text)
+                        dataviewModel.createSubCollection(text)
                     }
 
                 }) {
@@ -398,7 +446,7 @@ fun alertDialogAdd(dataviewModel: DataviewModel) {
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun alertDialogUpdate(title:String,dataviewModel: DataviewModel) {
+fun alertDialogUpdate(title:String, dataviewModel: NoteltModel) {
     val context= LocalContext.current
     val openDialogUp=remember{ mutableStateOf(true) }
     var text by remember { mutableStateOf("") }
@@ -441,7 +489,7 @@ fun alertDialogUpdate(title:String,dataviewModel: DataviewModel) {
                     isUpdateButtonClicked = true
                     mainText=text
                     runBlocking {
-                        dataviewModel.updateFoldersWithTitleNone(mainText, title)
+                        //dataviewModel.renameSubCollection(title,text)
                     }
                 }) {
                     Text(text="Update")
@@ -461,12 +509,12 @@ fun alertDialogUpdate(title:String,dataviewModel: DataviewModel) {
     }
 }
 @Composable
-fun alertDialog(navController:NavHostController) {
+fun alertDialog(navController:NavHostController,folder:String) {
     val PracticeMenus= listOf(
         PracticeMenu(Icons.TwoTone.Check,"Basic Review","Basic Flashcards review","Review"),
-        PracticeMenu(Icons.TwoTone.Search,"Multiple answers","Select the correct answer","None"),
-        PracticeMenu(Icons.TwoTone.Create,"Write Review","Review by writing word","None"),
-        PracticeMenu(Icons.TwoTone.LocationOn,"Match Cards","Math between two word","None"),
+        PracticeMenu(Icons.TwoTone.Search,"Multiple answers","Select the correct answer","Home"),
+        PracticeMenu(Icons.TwoTone.Create,"Write Review","Review by writing word","Home"),
+        PracticeMenu(Icons.TwoTone.LocationOn,"Match Cards","Math between two word","Home"),
     )
     val context= LocalContext.current
     val openDialog=remember{ mutableStateOf(true) }
@@ -488,7 +536,8 @@ fun alertDialog(navController:NavHostController) {
                         ) {
                             Button(
                                 onClick = {
-                                    navController.navigate(it.screen)
+
+                                    navController.navigate("${it.screen}")
                                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -528,6 +577,87 @@ fun alertDialog(navController:NavHostController) {
             },
 
             )
+    }
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun alertDialogAddWord(dataviewModel: NoteltModel,folder:String) {
+    val context= LocalContext.current
+    val openDialog=remember{ mutableStateOf(true) }
+    var textWord by remember { mutableStateOf("") }
+    var textDefination by remember { mutableStateOf("") }
+
+    if (openDialog.value){
+        AlertDialog(
+            onDismissRequest = { openDialog.value=false },
+            title={
+                Text(text = "Add new section")
+            },
+            text={
+                Column {
+                    TextField(
+                        value = textWord,
+                        onValueChange = { textWord = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = androidx.compose.ui.text.input.ImeAction.Done,
+                            capitalization = KeyboardCapitalization.Sentences
+                        ),
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize = 16.sp // Kích thước chữ
+                        ),
+                        singleLine = true,
+                        placeholder = { Text("Word") }
+                    )
+                    TextField(
+                        value = textDefination,
+                        onValueChange = { textDefination = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = androidx.compose.ui.text.input.ImeAction.Done,
+                            capitalization = KeyboardCapitalization.Sentences
+                        ),
+                        textStyle = LocalTextStyle.current.copy(
+                            fontSize = 16.sp // Kích thước chữ
+                        ),
+                        singleLine = true,
+                        placeholder = { Text("Defination") }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    openDialog.value = false
+                    Toast.makeText(context,"Confirm",Toast.LENGTH_SHORT).show()
+                    //addItemToFirebase(text)
+                    runBlocking {
+                        val documentData = mapOf(
+                            "word" to textWord,
+                            "defination" to textDefination,
+                            "heart" to false,
+                        )
+                        dataviewModel.addDocumentToSubCollection(folder,documentData)
+                    }
+
+                }) {
+                    Text(text="Add section")
+                }
+            },
+            dismissButton = {
+                Button(onClick = {
+                    openDialog.value = false
+                    Toast.makeText(context,"Dismiss",Toast.LENGTH_SHORT).show()
+                }) {
+                    Text(text="Cancle")
+                }
+            },
+        )
     }
 }
 data class PracticeMenu(

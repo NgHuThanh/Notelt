@@ -119,4 +119,7 @@ dependencies {
 //    kapt ("com.google.dagger:hilt-android-compiler:2.39")
 
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
+
+    implementation ("androidx.paging:paging-compose:1.0.0-alpha12")
 }
